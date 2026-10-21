@@ -113,8 +113,9 @@ não confirmaram a expectativa inicial.
 Os arquivos do VRA constam como *atualizados em 07/10/2026*; os do Anexo III, em datas entre 31/07/2025 e
 27/05/2026 (ver seção 8, "Atualidade").
 
-> Essa coleta foi feita localmente, para testar o pipeline. Dentro do Databricks a coleta é executada de novo
-> pelo notebook `01_coleta` (seção 5).
+> Essa coleta foi feita localmente, para testar o pipeline. Dentro do Databricks a coleta foi **repetida em
+> 21/10/2026, às 14:48 (horário de Brasília)**, pelo notebook `01_coleta` (seção 5). As tabelas e os resultados
+> exibidos nas capturas de tela são dessa execução na nuvem e coincidem com os da execução local.
 
 **Por que 2025 inteiro e só o VRA regular:** o ano completo preserva a sazonalidade (P1), tem volume
 suficiente para dividir em dois semestres (P4) e a ANAC já publicou o indicador oficial correspondente, o que
@@ -157,6 +158,19 @@ flowchart LR
   notebooks rodarem no Databricks e em Spark 4.0 local. O pipeline foi **testado localmente de ponta a ponta
   antes da execução na nuvem** ([log](evidencias/execucao_local/log_pipeline.txt)).
 
+**Evidência — Job executado no Databricks.** As seis tarefas (`coleta`, `bronze`, `silver`, `gold`,
+`qualidade`, `analise`) terminaram com sucesso, em computação serverless, em **13 min 38 s** no total.
+
+![Job do pipeline executado no Databricks, com as seis tarefas concluídas](evidencias/databricks/01_job_execucao.png)
+
+> **Registro honesto da execução.** Na primeira tentativa, a tarefa `qualidade` falhou com o erro
+> `[NOT_SUPPORTED_WITH_SERVERLESS] PERSIST TABLE is not supported on serverless compute`: o notebook usava
+> `DataFrame.cache()`, que funciona no Spark local, mas não na computação serverless. Removi o `cache()`
+> (commit [`687dba2`](https://github.com/Julianoteles22/MVP-PSP-8---Juliano-Teles/commit/687dba2)), atualizei a Git folder
+> e usei *Repair run*, que reexecutou só `qualidade` e `analise`. As quatro tarefas anteriores não foram
+> refeitas. É por isso que as durações de `qualidade` (1 min 49 s) e `analise` (36 s) correspondem à execução
+> reparada.
+
 ---
 
 ## 5. Coleta
@@ -173,7 +187,13 @@ Notebook [`01_coleta`](notebooks/01_coleta.py) · robô em [`scripts/coleta.py`]
   partida da linhagem e permite provar que os dados analisados são os coletados.
 * Codificação tratada arquivo a arquivo (o cadastro de aeródromos é ISO-8859-1; os demais, UTF-8 com BOM).
 * Se a computação serverless não tiver saída para a internet, o mesmo script roda localmente e a pasta é
-  enviada ao Volume pela interface — o restante do pipeline não muda.
+  enviada ao Volume pela interface — o restante do pipeline não muda. **No Databricks Free Edition a coleta
+  funcionou diretamente da nuvem** (5 min 29 s, mais lenta que os 61 s da execução local).
+
+**Evidência — dados persistidos na nuvem.** O Volume `workspace.aviacao_bronze.landing` contém as pastas
+`vra`, `percentuais`, `aerodromos`, `empresas` e `ourairports` (arquivos brutos) e o `_manifesto_coleta.json`:
+
+![Volume landing no Unity Catalog com os arquivos brutos](evidencias/databricks/02_volume_landing.png)
 
 ---
 
@@ -212,6 +232,24 @@ declarado, **domínio observado** (mínimo–máximo ou categorias encontradas),
 nulo e **linhagem** (campo de origem + regra aplicada). Ele é
 gerado por [`scripts/gerar_catalogo.py`](scripts/gerar_catalogo.py) a partir das tabelas carregadas, para nunca
 ficar desatualizado em relação aos dados.
+
+**Evidências no Databricks.** Os três schemas e suas tabelas Delta no Unity Catalog. A captura abaixo mostra
+as 6 tabelas do `aviacao_bronze` (árvore à esquerda) e o `aviacao_gold` (10 tabelas, com a fato e as dimensões):
+
+![Schemas aviacao_bronze e aviacao_gold com suas tabelas Delta no Unity Catalog](evidencias/databricks/03_schemas_tabelas.png)
+
+As demais tabelas da gold, incluindo as de qualidade e o resumo das respostas:
+
+![Tabelas da camada gold, incluindo qualidade_atributos, qualidade_regras e resumo_respostas](evidencias/databricks/03b_gold_tabelas.png)
+
+Amostra da tabela fato `fato_voo` (chaves substitutas das dimensões, sem nenhuma chave nula):
+
+![Amostra de dados da fato_voo no Databricks](evidencias/databricks/04_fato_amostra.png)
+
+**Linhagem** da fato, gerada automaticamente pelo Unity Catalog: a `fato_voo` é alimentada pelas tabelas silver
+`voo`, `empresa` e `aeroporto` e alimenta a tabela de conciliação com a ANAC:
+
+![Grafo de linhagem da fato_voo gerado pelo Unity Catalog](evidencias/databricks/05_linhagem.png)
 
 ---
 
@@ -306,6 +344,14 @@ As diferenças restantes concentram-se nas rotas-mês em que o número de etapas
 VRA foi baixado atualizado em outubro de 2026, enquanto cada Anexo III foi publicado entre 2025 e 2026, e a ANAC
 revisa o VRA depois da publicação.
 
+**Evidência — conciliação na nuvem.** Amostra da tabela `aviacao_gold.conciliacao_anac_rota` no Databricks: para
+cada rota e mês, os indicadores calculados a partir do VRA (`*_vra`) ao lado dos oficiais da ANAC (`*_oficial`).
+Nas linhas mostradas, cancelamento e atraso coincidem com os oficiais (por exemplo, 33,33% de cancelamento e
+8,68% de atraso > 30 min nos dois lados); a linha 9 é uma rota-mês que existe só no VRA, sem valor oficial (`null`).
+O resultado agregado da conciliação (95,1% e 97,0%) está no log do pipeline e na tabela acima.
+
+![Amostra da tabela de conciliação com os indicadores oficiais da ANAC](evidencias/databricks/07_conciliacao_anac.png)
+
 ### 8.3 Verificações entre atributos e entre fontes
 
 | Dimensão | Verificação | Ocorrências | Impacto | Tratamento |
@@ -328,6 +374,11 @@ revisa o VRA depois da publicação.
 | Conformidade | Coordenada ANAC × OurAirports difere > 5 km | 1 de 495 | Distância | Vale a da ANAC (R10) |
 | Consistência | Rotas-mês com nº de etapas diferente do oficial | 1.151 (8,4%) | Pequenas diferenças nos percentuais | Ver 8.2 |
 | Consistência | Rotas-mês com atraso diferindo > 0,1 p.p. do oficial | 1.059 (7,8%) | Validação da definição | Ver 8.2 |
+
+**Evidência — tabela `qualidade_regras` no Databricks** (20 verificações; a tabela acima resume as principais;
+os valores são idênticos aos da execução local):
+
+![Tabela qualidade_regras gerada pelo notebook 05_qualidade na nuvem](evidencias/databricks/06_qualidade_regras.png)
 
 **Atualidade.** O VRA foi atualizado pela ANAC em 07/10/2026; o cadastro de aeródromos, em 15/10/2026; e o
 Anexo III de cada mês foi publicado em datas que vão de 31/07/2025 a 27/05/2026. Os arquivos de percentuais
@@ -370,6 +421,10 @@ Intervalos de confiança de proporções: Wilson, 95%.
 ### 9.1 P1 — Evolução mensal, companhias e aeroportos
 
 ![P1](evidencias/graficos/p1_cias_aeroportos_meses.png)
+
+*Evidência — mesmo resultado na execução no Databricks (notebook `06_analise`):*
+
+![P1 no Databricks: evolução mensal, companhias e aeroportos](evidencias/databricks/08_p1_cias_aeroportos_meses.png)
 
 | Mês | Etapas | Atraso > 30 min | Atraso > 60 min | Cancelamento |
 |---|---|---|---|---|
@@ -427,6 +482,10 @@ padronizado pelo mix de rotas, e não a taxa bruta.
 
 ![P2](evidencias/graficos/p2_atraso_por_hora.png)
 
+*Evidência — mesmo resultado na execução no Databricks:*
+
+![P2 no Databricks: atraso e cancelamento por hora do dia](evidencias/databricks/09_p2_hora_do_dia.png)
+
 | Faixa de hora local de partida | Atraso > 30 min na chegada | Percentil 90 do atraso de partida |
 |---|---|---|
 | madrugada (2h–3h) | 3,5% | 4–6 min |
@@ -455,6 +514,10 @@ reservas de tripulação) na **tarde e início da noite**; um voo programado às
 ### 9.3 P3 — Quanto do atraso se recupera no ar
 
 ![P3](evidencias/graficos/p3_recuperacao_em_voo.png)
+
+*Evidência — mesmo resultado na execução no Databricks:*
+
+![P3 no Databricks: recuperação do atraso no ar](evidencias/databricks/10_p3_recuperacao_em_voo.png)
 
 Voos que saíram com **mais de 15 min de atraso** (152.703 voos). *Absorção* = atraso na chegada − atraso na
 partida; negativa significa que o voo recuperou tempo.
@@ -492,6 +555,10 @@ pequeno e provavelmente reflete voos reprogramados; não foi investigado. **Deci
 
 ![P4](evidencias/graficos/p4_persistencia_rotas.png)
 
+*Evidência — mesmo resultado na execução no Databricks:*
+
+![P4 no Databricks: persistência das rotas, avaliação prospectiva](evidencias/databricks/11_p4_persistencia_rotas.png)
+
 **Desenho.** Para evitar o erro de "prever o passado", usa-se uma avaliação **prospectiva**: as rotas são
 ordenadas apenas com dados do **1º semestre** e avalia-se quantos atrasos do **2º semestre** elas cobrem.
 População: rotas não circulares com ao menos 100 voos realizados **em cada** semestre — **709 rotas**, com
@@ -525,6 +592,10 @@ não substitui medidas gerais de horário e de sazonalidade (P1 e P2) para a mai
 
 ![P5](evidencias/graficos/p5_distancia_tipo_linha.png)
 
+*Evidência — mesmo resultado na execução no Databricks:*
+
+![P5 no Databricks: atraso e cancelamento por distância e tipo de linha](evidencias/databricks/12_p5_distancia_tipo_linha.png)
+
 | Faixa de distância | Tipo | Etapas | Atraso > 30 min | Cancelamento |
 |---|---|---|---|---|
 | Até 500 km | Nacional | 246.328 | 7,9% | 2,9% |
@@ -554,6 +625,11 @@ poucas etapas (472 e 1.183) e **intervalos de confiança largos**; os 18,3% de c
 externas (aeroportos estrangeiros, controle de tráfego, janelas de pouso), que o VRA não captura.
 **Decisão:** metas de pontualidade devem ser **diferenciadas** entre operação doméstica e internacional, e
 comparar companhias sem controlar o tipo de linha (como na P1) é um erro.
+
+**Evidência — tabela `resumo_respostas` no Databricks** (indicadores-chave de P1 a P5 gravados como tabela Delta;
+as primeiras linhas aparecem na captura):
+
+![Tabela resumo_respostas gravada pelo notebook 06_analise](evidencias/databricks/13_resumo_respostas.png)
 
 ---
 
@@ -662,7 +738,24 @@ Em máquinas com pouca memória, o pipeline exporta a silver para Parquet e pode
 * **Execução local completa** (teste antes da nuvem): [`log_coleta.txt`](evidencias/execucao_local/log_coleta.txt)
   e [`log_pipeline.txt`](evidencias/execucao_local/log_pipeline.txt) — coleta de 28 arquivos, carga de todas as
   tabelas, verificações de integridade, conciliação com a ANAC e resultados de P1–P5.
-* **Execução na nuvem (Databricks):** capturas de tela em [`evidencias/databricks/`](evidencias/databricks/).
+* **Execução na nuvem (Databricks):** 14 capturas de tela em [`evidencias/databricks/`](evidencias/databricks/), cada
+  uma referenciada no ponto do texto que ela sustenta:
+
+| Captura | Comprova | Seção |
+|---|---|---|
+| `01_job_execucao` | Job com as 6 tarefas concluídas (13 min 38 s; `qualidade` e `analise` reparadas) | 4 |
+| `02_volume_landing` | Arquivos brutos e manifesto persistidos no Volume | 5 |
+| `03_schemas_tabelas`, `03b_gold_tabelas` | Schemas e tabelas Delta no Unity Catalog | 6 |
+| `04_fato_amostra` | Dados da tabela fato | 6 |
+| `05_linhagem` | Grafo de linhagem (Unity Catalog) | 6 |
+| `06_qualidade_regras` | Verificações de qualidade | 8.3 |
+| `07_conciliacao_anac` | Comparação com os indicadores oficiais da ANAC | 8.2 |
+| `08_p1_…` a `12_p5_…` | Resultado de cada pergunta (P1 a P5) | 9.1 a 9.5 |
+| `13_resumo_respostas` | Indicadores-chave gravados em tabela | 9 |
+
+  As capturas foram feitas diretamente do navegador, sem edição. Em algumas aparece o aviso amarelo do próprio
+  Databricks ("Automated browser control detected"), porque as capturas foram tiradas por uma ferramenta de
+  automação do navegador; o aviso não afeta o conteúdo mostrado.
 
 ---
 
