@@ -219,7 +219,6 @@ velo = ambiente.sql("""
     FROM {gold.fato_voo} f JOIN {gold.dim_rota} r ON f.sk_rota = r.sk_rota
     WHERE f.mede_magnitude AND r.distancia_km >= 100
 """).withColumn("velocidade_kmh", F.col("distancia_km") / F.col("horas_voo"))
-velo.cache()
 resumo_velo = velo.agg(F.count("*").alias("voos"),
                        F.expr("percentile_approx(velocidade_kmh, array(0.01, 0.5, 0.99))").alias("p"),
                        F.count(F.when((F.col("velocidade_kmh") > 1100) | (F.col("velocidade_kmh") < 150), 1)).alias("implausiveis")).first()
