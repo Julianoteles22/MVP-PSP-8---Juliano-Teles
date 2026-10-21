@@ -1,0 +1,442 @@
+
+==========================================================================================
+▶ 01_coleta.py
+==========================================================================================
+Ambiente: local
+Destino dos arquivos brutos: dados\landing
+Manifesto encontrado — arquivos já coletados. Pulando o download.
+Coleta concluída em 2026-10-21T12:42:27+00:00 (UTC) — 28 arquivos, 157.3 MB
+           fonte  arquivos  megabytes  registros           coletado_em_utc
+ ANAC Aeródromos         1        0.1        496 2026-10-21T12:42:25+00:00
+   ANAC Empresas         2        0.3        880 2026-10-21T12:42:25+00:00
+ANAC Percentuais        12        1.6      13635 2026-10-21T12:42:25+00:00
+        ANAC VRA        12      142.5    1005807 2026-10-21T12:42:16+00:00
+     OurAirports         1       12.7      86258 2026-10-21T12:42:26+00:00
+  ✔ bronze_manifesto_coleta: 28 linhas
+✔ 01_coleta.py concluído em 26.7s
+
+==========================================================================================
+▶ 02_bronze.py
+==========================================================================================
+  ✔ bronze_vra_voos: 1.005.807 linhas
+  ✔ bronze_anac_percentuais_rota: 13.635 linhas
+  ✔ bronze_anac_aerodromos: 496 linhas
+  ✔ bronze_anac_empresas: 880 linhas
+  ✔ bronze_ourairports: 86.258 linhas
+           fonte  linhas_bronze  registros_manifesto
+ ANAC Aeródromos            496                  496
+   ANAC Empresas            880                  880
+ANAC Percentuais          13635                13635
+        ANAC VRA        1005807              1005807
+     OurAirports          86258                86258
+Contagens da bronze conferem com o manifesto da coleta.
+✔ 02_bronze.py concluído em 43.5s
+
+==========================================================================================
+▶ 03_silver.py
+==========================================================================================
+Fuso da sessão Spark: UTC
+  ✔ silver_aeroporto: 44.332 linhas
+  ✔ silver_empresa: 169 linhas
+  ✔ silver_percentuais_oficiais: 13.635 linhas
+Registros no VRA: 1.005.807 → após remover duplicatas (R8): 1.005.746 (61 removidos)
+  ✔ silver_metricas_bronze: 7 linhas
+  ✔ silver_voo: 1.005.746 linhas
+✔ 03_silver.py concluído em 128.4s
+
+==========================================================================================
+▶ 04_gold.py
+==========================================================================================
+  ✔ gold_dim_tipo_linha: 6 linhas
+  ✔ gold_dim_empresa: 111 linhas
+  ✔ gold_dim_aeroporto: 419 linhas
+  ✔ gold_dim_rota: 3.192 linhas
+  ✔ gold_dim_data: 368 linhas
+  ✔ gold_fato_voo: 1.005.746 linhas
+               chave  orfas
+          sk_empresa      0
+ sk_aeroporto_origem      0
+sk_aeroporto_destino      0
+             sk_rota      0
+       sk_tipo_linha      0
+             sk_data      0
+Integridade referencial e grão verificados.
+✔ 04_gold.py concluído em 104.3s
+
+==========================================================================================
+▶ 05_qualidade.py
+==========================================================================================
+  ✔ gold_qualidade_atributos: 80 linhas
+                     tabela              atributo  pct_nulos  distintos               minimo              maximo  violacoes_dominio
+                 silver.voo               empresa       0.00        111                    3                   3                0.0
+                 silver.voo            numero_voo       0.00       9820                    3                   5                0.0
+                 silver.voo            tipo_linha       0.00          5                    1                   2                0.0
+                 silver.voo                origem       0.00        385                    4                   4                0.0
+                 silver.voo               destino       0.00        385                    4                   4                0.0
+                 silver.voo      partida_prevista       2.80     107895  2025-01-01 00:00:00 2026-01-02 09:05:00                0.0
+                 silver.voo          partida_real       2.75     419414  2024-12-31 23:47:00 2026-01-01 19:05:00                0.0
+                 silver.voo      chegada_prevista       2.80     107007  2025-01-01 01:40:00 2026-01-02 14:50:00                0.0
+                 silver.voo          chegada_real       2.75     423310  2025-01-01 01:23:00 2026-01-01 21:52:00                0.0
+                 silver.voo              situacao       0.00          2                    9                   9                0.0
+                 silver.voo               ano_mes       0.00         12                    7                   7                0.0
+                 silver.voo             cancelado       0.00          2                 None                None                NaN
+                 silver.voo             realizado       0.00          2                 None                None                NaN
+                 silver.voo  tem_horario_previsto       0.00          2                 None                None                NaN
+                 silver.voo       voo_passageiros       0.00          2                 None                None                NaN
+                 silver.voo             voo_extra       0.00          2                 None                None                NaN
+                 silver.voo         rota_circular       0.00          2                 None                None                NaN
+                 silver.voo    atraso_partida_min       5.56       1844              -2890.0             44635.0              303.0
+                 silver.voo    atraso_chegada_min       5.56       1872              -2984.0             44625.0              338.0
+                 silver.voo        atraso_extremo       0.00          2                 None                None                NaN
+                 silver.voo        tempo_invalido       0.00          2                 None                None                NaN
+              gold.fato_voo                id_voo       0.00    1005746 -9223371300454893833 9223369311177032422                NaN
+              gold.fato_voo               sk_data       0.00        367             20250101            20260102                NaN
+              gold.fato_voo            sk_empresa       0.00        111                    1                 111                NaN
+              gold.fato_voo   sk_aeroporto_origem       0.00        385                    1                 419                NaN
+              gold.fato_voo  sk_aeroporto_destino       0.00        385                    1                 418                NaN
+              gold.fato_voo               sk_rota       0.00       3192                    1                3192                NaN
+              gold.fato_voo         sk_tipo_linha       0.00          5                    1                   5                NaN
+              gold.fato_voo               ano_mes       0.00         12                    7                   7                0.0
+              gold.fato_voo              semestre       0.00          2                   11                  11                0.0
+              gold.fato_voo            numero_voo       0.00       9820                    3                   5                NaN
+              gold.fato_voo      partida_prevista       2.80     107895  2025-01-01 00:00:00 2026-01-02 09:05:00                NaN
+              gold.fato_voo          partida_real       2.75     419414  2024-12-31 23:47:00 2026-01-01 19:05:00                NaN
+              gold.fato_voo      chegada_prevista       2.80     107007  2025-01-01 01:40:00 2026-01-02 14:50:00                NaN
+              gold.fato_voo          chegada_real       2.75     423310  2025-01-01 01:23:00 2026-01-01 21:52:00                NaN
+              gold.fato_voo    hora_partida_local      11.89         24                    0                  23                0.0
+              gold.fato_voo   faixa_horaria_local       0.00          8                    7                  17                0.0
+              gold.fato_voo             cancelado       0.00          2                 None                None                NaN
+              gold.fato_voo             realizado       0.00          2                 None                None                NaN
+              gold.fato_voo  tem_horario_previsto       0.00          2                 None                None                NaN
+              gold.fato_voo       voo_passageiros       0.00          2                 None                None                NaN
+              gold.fato_voo             voo_extra       0.00          2                 None                None                NaN
+              gold.fato_voo         rota_circular       0.00          2                 None                None                NaN
+              gold.fato_voo        atraso_extremo       0.00          2                 None                None                NaN
+              gold.fato_voo        tempo_invalido       0.00          2                 None                None                NaN
+              gold.fato_voo   no_universo_oficial       0.00          2                 None                None                NaN
+              gold.fato_voo        mede_magnitude       0.00          2                 None                None                NaN
+              gold.fato_voo    atraso_partida_min       5.56       1844              -2890.0             44635.0              303.0
+              gold.fato_voo    atraso_chegada_min       5.56       1872              -2984.0             44625.0              338.0
+              gold.fato_voo          absorcao_min       5.56        473              -1351.0               578.0                NaN
+              gold.fato_voo    atrasou_partida_15       5.56          2                 None                None                NaN
+              gold.fato_voo    atrasou_chegada_15       5.56          2                 None                None                NaN
+              gold.fato_voo    atrasou_chegada_30       5.56          2                 None                None                NaN
+              gold.fato_voo    atrasou_chegada_60       5.56          2                 None                None                NaN
+           silver.aeroporto                  icao       0.00      44332                    4                   4                0.0
+           silver.aeroporto                  nome       0.00      42264                    3                  99                NaN
+           silver.aeroporto             municipio       5.28      22857                    2                  51                NaN
+           silver.aeroporto                    uf      85.66         27                    2                   2                0.0
+           silver.aeroporto                  pais       0.00        241                    2                   2                0.0
+           silver.aeroporto              latitude       0.00      43851                -90.0           82.517263                0.0
+           silver.aeroporto             longitude       0.00      43960          -179.876999            179.9757                0.0
+           silver.aeroporto      fonte_coordenada       0.00          2                    4                  11                0.0
+           silver.aeroporto  latitude_ourairports       0.00      43855                -90.0           82.517263                NaN
+           silver.aeroporto longitude_ourairports       0.00      43960          -179.876999            179.9757                NaN
+           silver.aeroporto      no_cadastro_anac       0.00          2                 None                None                NaN
+           silver.aeroporto          fuso_horario      85.64          9                   14                  20                0.0
+             silver.empresa                  icao       0.00        169                    3                   3                0.0
+             silver.empresa          razao_social       0.00        169                    8                  83                NaN
+             silver.empresa       origem_cadastro       0.00          2                    8                  11                0.0
+             silver.empresa               servico       0.00         10                   19                  95                NaN
+             silver.empresa                 ativa       0.00          1                 None                None                NaN
+             silver.empresa      data_instrumento      37.87         85  1995-02-08 00:00:00 2026-11-19 00:00:00                NaN
+silver.percentuais_oficiais                origem       0.00        253                    4                   4                0.0
+silver.percentuais_oficiais               destino       0.00        248                    4                   4                0.0
+silver.percentuais_oficiais      etapas_previstas       0.00        541                    1                1670                0.0
+silver.percentuais_oficiais      pct_cancelamento       0.00        720                  0.0               100.0                0.0
+silver.percentuais_oficiais         pct_atraso_30       0.00       1521                  0.0               100.0                0.0
+silver.percentuais_oficiais         pct_atraso_60       0.00        927                  0.0               100.0                0.0
+silver.percentuais_oficiais          publicado_em       0.00          6           2025-07-31          2026-05-27                NaN
+silver.percentuais_oficiais               ano_mes       0.00         12                    7                   7                0.0
+  ✔ gold_conciliacao_anac_rota: 14.759 linhas
+Rotas-mês no VRA: 14.759 | no oficial: 13.635 | em ambos: 13.635 | só no VRA: 1.124 (3.381 etapas) | só no oficial: 0 (0 etapas)
+Etapas previstas — VRA: 944.222 × oficial: 938.280 (diferença de +0.63%)
+Rotas-mês com o mesmo nº de etapas: 91.6%
+% de atraso > 30 min: diferença absoluta média 0.24 p.p. (ponderada por voos: 0.12); 90.6% das rotas-mês coincidem em ±0,1 p.p.; correlação 0.9809
+% de cancelamento: diferença absoluta média 0.47 p.p.; 94.3% coincidem em ±0,1 p.p.
+Só nas rotas-mês com o mesmo nº de etapas (12.484): atraso>30 coincide em ±0.1 p.p. em 95.1%; cancelamento em 97.0%
+Voos avaliados: 925.145 | velocidade implícita p1 / mediana / p99: 208 / 546 / 846 km/h | fora de 150–1.100 km/h: 693
+origem destino  distancia_km  voos
+  SBCF    SNDV         112.5   162
+  SBRF    SBJP         108.8   158
+  SNDV    SBCF         112.5    87
+  SBKP    SBAQ         167.9    62
+  SBRF    SBKG         143.4    27
+  SBJP    SBRF         108.8    17
+  SBRF    SNRU         121.0    17
+  SBAQ    SBKP         167.9    14
+sentido         SBGR → outro outro → SBGR diferenca_min
+outro_aeroporto                                        
+KJFK              585.000000   585.000000      0.000000
+SBCY              135.000000   135.000000      0.000000
+SBEG              240.000000   235.000000      5.000000
+SBRF              185.000000   195.000000     10.000000
+Maior diferença entre os sentidos: 10 min (em hora local seria de 60 a 120 min nas rotas entre fusos) → premissa de UTC sustentada.
+  ✔ gold_qualidade_regras: 20 linhas
+    dimensao                                                                              verificacao  ocorrencias    base     pct                                                                                                                     afeta                                                                                                                        tratamento
+   Unicidade    Etapas repetidas pela chave natural (empresa, voo, rota, horário, tipo) — antes da R8           61 1005807   0.006                                                                                                    Dupla contagem de voos Fica o registro com horário real mais coerente com o previsto (R8). Os repetidos não são cópias: trazem horários reais diferentes
+Conformidade                     Horários previstos com fração de segundo ('.100000000') no VRA bruto        66695 1005807   6.631                                                                                              Nenhum (a fração é de 0,1 s)     Fração descartada na conversão para timestamp (R2); sem esse tratamento, a leitura direta marca esses horários como inválidos
+  Completude      Código de justificativa (atraso/cancelamento) sem informação (vazio ou texto 'N/A')      1005807 1005807 100.000                                                                        Impede analisar causas de atraso e de cancelamento        Coluna 'preenchida' com o texto N/A em todas as linhas de 2025: não usada; as causas ficam fora do escopo (ver limitações)
+Conformidade   Etapas com o código de tipo de linha literal 'NA' (todas canceladas, de abril a julho)          463 1005807   0.046 P1 (cancelamento de abr–jul); o texto 'NA' é lido como nulo por padrão em pandas e em muitas ferramentas, o que o esconde                      Mantido como código próprio (R7, R14); tratado como passageiros: com ele, mais rotas-mês batem com o oficial
+  Completude                                                Etapas sem código de tipo de linha (nulo)            0 1005807   0.000                                                                               Impossível saber se são voos de passageiros                                                       Membro 'Não informado (nulo)' na dimensão (R14); nenhuma ocorrência em 2025
+  Completude                                                     Voos realizados sem horário previsto        28196  978038   2.883                                                                                                  Não há como medir atraso                                   Excluídos das métricas de atraso (R17); 84% deles têm número de voo com prefixo Z (voos extras)
+  Completude                                          Voos com prefixo Z que não têm horário previsto        24795   29547  83.917                                                        Sustenta a inferência de que o prefixo Z indica voo não programado                                                                                                      Registrado em voo_extra (R7)
+Consistência                                   Voos cancelados com horário real de partida ou chegada            0   27708   0.000                                                                                                                         —                                                                                                                Nenhuma ocorrência
+Consistência                                   Voos realizados sem horário real de partida ou chegada            0  978038   0.000                                                                                                                         —                                                                                                                Nenhuma ocorrência
+Consistência                                       Chegada não posterior à partida (real ou prevista)            2 1005746   0.000                                                                                                             P3 (absorção)                                                              Marcados em tempo_invalido (R6) e excluídos das medidas de magnitude
+Consistência                                                Origem igual ao destino (voos circulares)         4043 1005746   0.402                                                                  Distância zero; não representam transporte entre cidades                                                               Marcados em rota_circular (R7); fora das medidas de magnitude (R18)
+Consistência                               Mês do arquivo diferente do mês do horário previsto em UTC          240  977550   0.025                                                                                                      P1 (evolução mensal)                                    O mês é o do arquivo (R9), que é a atribuição da ANAC; a diferença vem do fuso e é desprezível
+    Acurácia                               Atrasos ou antecipações acima de 24 h (partida ou chegada)          355  949842   0.037                                                            Distorcem médias (um voo chegou a registrar 31 dias de atraso)                             Marcados em atraso_extremo (R5): contam nos percentuais (como na ANAC), saem das medidas de magnitude
+    Acurácia                                                     Antecipação de partida maior que 2 h          585  949842   0.062                                                                                            Pouco plausível em voo regular                                                         Mantidos: não afetam os percentuais de atraso; efeito nas medianas é nulo
+    Acurácia Voos de passageiros com velocidade implícita fora de 150–1.100 km/h (distância ≥ 100 km)          693  925145   0.075                                                                                                   P3, P5 (usam distância)                               Verificação das coordenadas e dos horários; ocorrências concentradas em poucas rotas (tabela acima)
+  Completude                                                        Aeroportos do VRA sem coordenadas            4     419   0.955                                                                        Distância indisponível nas rotas desses aeroportos                                                                         Distância nula; voos fora das análises que usam distância
+  Completude                                    Voos de empresas sem razão social no cadastro da ANAC         2904 1005746   0.289                                                                                                    P1 (nome da companhia)                                                                   Mantidos com o código ICAO e a descrição 'Sem cadastro na ANAC'
+Conformidade   Aeroportos brasileiros cuja coordenada difere em mais de 5 km entre ANAC e OurAirports            1     495   0.202                                                                                                        P3, P5 (distância)                                                                                        A coordenada da ANAC tem precedência (R10)
+Consistência         Rotas-mês em que o nº de etapas previstas difere entre o VRA e o oficial da ANAC         1151   13635   8.442                                                                                       Diferenças pequenas nos percentuais                                         Esperado: VRA atualizado em 2026 × Anexo III publicado entre 2025 e 2026; ver conciliação
+Consistência                   Rotas-mês com atraso > 30 min diferindo em mais de 0,1 p.p. do oficial         1059   13635   7.767                                                                                          Validação da definição de atraso                                                            A definição adotada reproduz o oficial na grande maioria das rotas-mês
+           fonte primeira_atualizacao ultima_atualizacao  arquivos
+ ANAC Aeródromos           2026-10-15         2026-10-15         1
+   ANAC Empresas           2026-04-06         2026-10-21         2
+ANAC Percentuais           2025-07-31         2026-05-27        12
+        ANAC VRA           2026-10-07         2026-10-07        12
+Total de violações de domínio nas tabelas Silver: 1282 (as de atraso fora de ±24 h são os voos já sinalizados em atraso_extremo)
+✔ 05_qualidade.py concluído em 259.4s
+
+==========================================================================================
+▶ 06_analise.py
+==========================================================================================
+Universo de análise: 947.603 etapas de voos de passageiros em 2025 — 8,0% chegaram com mais de 30 min de atraso; 2,2% foram cancelados.
+ano_mes  etapas  pct_atraso_30  pct_atraso_60  pct_cancelamento
+2025-01   84448           8.30           3.36              2.99
+2025-02   74245           9.70           4.15              2.93
+2025-03   77519           6.55           2.74              1.86
+2025-04   76086           7.73           3.07              2.36
+2025-05   78042           6.38           2.59              1.77
+2025-06   76537           6.92           2.66              1.94
+2025-07   82906           7.45           3.17              2.09
+2025-08   80260           5.97           2.30              1.70
+2025-09   78017           6.39           2.62              1.90
+2025-10   80319           7.39           2.72              2.00
+2025-11   76070           8.23           3.14              1.86
+2025-12   83154          15.27           6.59              3.40
+
+Companhias com ao menos 5.000 etapas: 10 (somam 92,9% dos voos)
+icao                    nome  etapas  participacao  pct_atraso_30  pct_cancelamento  razao_obs_esp
+ TAP       Tap - Transportes   10091           1.1          19.58              1.40           1.03
+ ARG   Aerolineas Argentinas    8373           0.9          13.50              4.36           1.29
+ ACN        Azul Conecta (Ex   16178           1.7          12.09             13.77           1.00
+ AVA Aerovias Del Continente    5153           0.5          10.89              2.50           0.98
+ SKU             Sky Airline    6248           0.7          10.08             13.62           1.28
+ AZU      Azul Linhas Aéreas  290930          30.7           7.98              1.48           1.03
+ TAM       Tam Linhas Aéreas  286680          30.3           7.74              1.64           1.03
+ LAN    Latam Airlines Group   11021           1.2           7.38              0.68           0.82
+ GLO       Gol Linhas Aéreas  236619          25.0           5.53              1.06           0.83
+ CMP    Compañia Panameña De    8758           0.9           3.82              0.35           0.98
+
+Aeroportos brasileiros com ao menos 8.000 chegadas: 22
+icao                     nome_curto  chegadas  pct_atraso_30  pct_cancelamento
+SBGR               Guarulhos (SBGR)    137975          10.01              1.65
+SBKP                Campinas (SBKP)     56457           9.05              1.92
+SBFL           Florianópolis (SBFL)     17602           8.55              2.67
+SBCY                  Cuiabá (SBCY)      9809           8.45              1.71
+SBCF                 Confins (SBCF)     57389           8.40              1.61
+SBCT                Curitiba (SBCT)     25961           8.19              2.40
+SBBE                   Belém (SBBE)     15463           7.98              1.51
+SBEG                  Manaus (SBEG)     12951           7.78              2.96
+SBNF              Navegantes (SBNF)      8355           7.69              2.38
+SBSG São Gonçalo Do Amarante (SBSG)      8187           7.64              0.93
+SBGO                 Goiânia (SBGO)     13544           7.53              1.42
+SBPA            Porto Alegre (SBPA)     27490           7.31              1.97
+SBGL          Rio De Janeiro (SBGL)     57960           7.30              1.47
+SBVT                 Vitória (SBVT)     12828           7.30              1.81
+SBRF                  Recife (SBRF)     36279           7.10              1.41
+SBFZ               Fortaleza (SBFZ)     19392           6.85              1.26
+SBSV                Salvador (SBSV)     27964           6.55              1.46
+SBPS            Porto Seguro (SBPS)      8907           6.52              1.79
+SBSP               São Paulo (SBSP)     94321           6.11              1.75
+SBBR                Brasília (SBBR)     57698           5.70              0.98
+SBMO                  Maceió (SBMO)      9784           5.50              0.95
+SBRJ          Rio De Janeiro (SBRJ)     29145           5.44              2.79
+ hora  etapas  pct_atraso_30  pct_atraso_part15  mediana_atraso_partida  p90_atraso_partida  pct_cancelamento
+    0   16775            4.6                9.2                    -5.0                14.0               1.9
+    1   14096            4.4                7.1                    -6.0                 8.0               1.6
+    2   27455            3.5                5.0                    -7.0                 4.0               1.6
+    3   38759            3.5                5.3                    -6.0                 6.0               2.0
+    4   36500            5.4               11.4                    -1.0                17.0               1.6
+    5   59696            5.3               11.9                    -1.0                18.0               1.6
+    6   51482            5.5               12.5                    -1.0                19.0               1.9
+    7   45921            6.2               13.6                    -2.0                21.0               2.2
+    8   48177            6.5               14.6                    -2.0                22.0               2.0
+    9   49393            7.5               16.1                    -1.0                25.0               2.0
+   10   41080            7.6               15.9                    -2.0                25.0               1.9
+   11   49595            7.5               16.2                    -1.0                25.0               1.7
+   12   47489            9.0               17.7                    -1.0                28.0               2.2
+   13   38889            9.7               19.0                    -1.0                30.0               2.1
+   14   57695           10.4               20.4                    -1.0                32.0               1.8
+   15   43896           10.5               20.4                    -1.0                32.0               2.2
+   16   38133           11.0               20.1                    -2.0                33.0               1.8
+   17   36187            9.8               19.6                    -1.0                31.0               2.0
+   18   32974            7.9               17.9                    -1.0                28.0               1.7
+   19   32438           10.3               23.1                     0.0                33.0               1.2
+   20   29816            9.7               21.0                     0.0                30.0               2.2
+   21    5360            8.9               16.8                    -3.0                28.0               3.0
+   22   10051            6.3               16.8                    -2.0                25.0               1.2
+   23   14566            5.2               11.4                    -5.0                18.0               1.2
+
+Correlação de Spearman hora × % de atraso (05h–22h): 0.57 (p = 1.3e-02); hora × mediana do atraso de partida: 0.06
+Atraso > 30 min nos voos das 06h–08h: 6,1%  ×  das 18h–20h: 9,3%  (razão 1,5×)
+     faixa_distancia  voos  mediana_atraso_partida  mediana_absorcao  q1_absorcao  q3_absorcao  pct_chegam_no_horario  pct_recuperam_algo
+       1. Até 500 km 35536                    32.0              -4.0         -8.0          2.0                   17.5                66.3
+   2. 500 a 1.000 km 37656                    30.0              -4.0         -9.0          1.0                   20.5                68.3
+ 3. 1.000 a 2.000 km 33850                    30.0              -5.0        -11.0          1.0                   25.0                70.6
+ 4. 2.000 a 4.000 km 23272                    29.0              -7.0        -14.0          0.0                   30.6                73.4
+5. Acima de 4.000 km 22389                    32.0             -13.0        -27.0          0.0                   40.4                73.6
+
+ faixa_atraso_partida  voos  mediana_absorcao  fracao_recuperada_mediana  pct_chegam_no_horario
+      1. 15 a 30 min 75874              -5.0                        0.2                   46.4
+      2. 30 a 60 min 45832              -5.0                        0.1                    6.6
+          3. 1 a 2 h 20138              -5.0                        0.1                    0.8
+      4. Mais de 2 h 10859              -6.0                        0.0                    1.5
+Rotas na população: 709 — 443.350 voos realizados e 37.002 atrasados (> 30 min) no 2º semestre (taxa-base 8.3%)
+Correlação de Spearman entre a taxa de atraso do 1º e a do 2º semestre (por rota): 0.59
+
+Cobertura dos atrasos do 2º semestre (linha de referência: cobertura = esforço)
+                          cobertura com 5% dos voos cobertura com 10% dos voos cobertura com 20% dos voos
+critério                                                                                                 
+taxa de atraso no 1º sem.                     10,7%                      16,5%                      28,5%
+nº de atrasos no 1º sem.                       4,1%                      10,2%                      22,4%
+volume de voos no 1º sem.                      4,2%                       9,1%                      20,5%
+
+Com 10% do esforço: critério 'taxa' menos critério 'volume' = +7,4 p.p. (IC 95% por bootstrap sobre as rotas: [+5,2 p.p.; +9,7 p.p.])
+As 70 rotas (10%) de maior taxa no 1º semestre tiveram 18,9% de atraso no 2º; as demais, 7,9% (2,4×).
+origem destino  voos_1sem  taxa_1sem  voos_2sem  taxa_2sem
+  LPPT    SBKP        320       41.2        306       31.7
+  KEWR    SBGR        181       40.9        183       45.4
+  LPPT    SBSG        165       33.3        165       23.6
+  KORD    SBGR        181       33.1        182       42.3
+  CYYZ    SBGR        181       31.5        179       30.2
+  KDFW    SBGR        181       30.4        185       44.3
+  KIAH    SBGR        180       28.9        183       32.2
+  LPPT    SBSV        168       28.6        181       28.2
+     faixa_distancia    tipo_linha  etapas  pct_atraso_30  pct_cancelamento
+       1. Até 500 km Internacional     472          16.90             11.02
+       1. Até 500 km      Nacional  246328           7.88              2.85
+   2. 500 a 1.000 km Internacional    1183           9.94             18.34
+   2. 500 a 1.000 km      Nacional  260192           7.18              1.65
+ 3. 1.000 a 2.000 km Internacional   40102          11.58              2.37
+ 3. 1.000 a 2.000 km      Nacional  188663           6.11              0.92
+ 4. 2.000 a 4.000 km Internacional   33999           9.57              3.21
+ 4. 2.000 a 4.000 km      Nacional   94506           7.52              1.07
+5. Acima de 4.000 km Internacional   81694          14.15              5.37
+
+Por tipo de linha (todas as distâncias):
+                etapas  pct_atraso_30  pct_cancelamento
+tipo_linha                                            
+Internacional  157450         0.1246            0.0425
+Nacional       789689         0.0718            0.0178
+
+Spearman entre distância e taxa de atraso (rotas com ≥ 200 voos, n = 746): 0.14; com taxa de cancelamento: -0.26
+  ✔ gold_resumo_respostas: 27 linhas
+pergunta                                                       indicador                             valor
+      P1          Etapas de passageiros / atraso > 30 min / cancelamento             947.603 / 8,0% / 2,2%
+      P1                                      Pior mês (atraso > 30 min)                    2025-12: 15,3%
+      P1                                    Melhor mês (atraso > 30 min)                     2025-08: 6,0%
+      P1                    3 maiores companhias (participação nos voos)                             85,9%
+      P1                      Companhia mais acima do esperado (obs/esp) Aerolineas Argentinas (ARG): 1,29
+      P1                     Companhia mais abaixo do esperado (obs/esp)  Latam Airlines Group (LAN): 0,82
+      P1        Aeroporto com maior atraso na chegada (≥ 8.000 chegadas)           Guarulhos (SBGR): 10,0%
+      P2                                Hora local com maior % de atraso                        16h: 11,0%
+      P2                 Hora local com menor % de atraso (≥ 3.000 voos)                         03h: 3,5%
+      P2                                Atraso das 06h–08h × das 18h–20h                6,1% × 9,3% (1,5×)
+      P2                              Spearman hora (05h–22h) × % atraso                0,57 (p = 1.3e-02)
+      P3                  Voos com atraso de partida > 15 min analisados                           152.703
+      P3 % que recuperam algum tempo no ar / % que chegam com até 15 min                     69,9% / 25,2%
+      P3              Mediana recuperada: Até 500 km × Acima de 4.000 km                  -4 min × -13 min
+      P3      % que chegam no horário: atraso de 15–30 min × mais de 2 h                      46,4% × 1,5%
+      P4              Rotas na população / voos e atrasos do 2º semestre            709 / 443.350 e 37.002
+      P4                Spearman: taxa 1º sem. × taxa 2º sem. (por rota)                              0,59
+      P4          Cobertura com 10% dos voos — taxa de atraso no 1º sem.                             16,5%
+      P4           Cobertura com 10% dos voos — nº de atrasos no 1º sem.                             10,2%
+      P4          Cobertura com 10% dos voos — volume de voos no 1º sem.                              9,1%
+      P4                      Taxa − volume, com 10% de esforço (IC 95%)  +7,4 p.p. [+5,2 p.p.; +9,7 p.p.]
+      P4   Taxa de atraso no 2º sem. das 10% piores rotas do 1º × demais                      18,9% × 7,9%
+      P5                       Atraso > 30 min: nacional × internacional                      7,2% × 12,5%
+      P5                          Cancelamento: nacional × internacional                     1,78% × 4,25%
+      P5      Spearman distância × taxa de atraso (por rota, ≥ 200 voos)                              0,14
+      P5            Spearman distância × taxa de cancelamento (por rota)                             -0,26
+      P5                  Combinação com maior atraso (distância × tipo) Até 500 km · Internacional: 16,9%
+✔ 06_analise.py concluído em 87.9s
+
+==========================================================================================
+▶ sql/consultas_analise.sql — 10 consultas
+==========================================================================================
+[1] OK (2s, 5 linhas na amostra)
+ano_mes  etapas pct_atraso_30 pct_atraso_60 pct_cancelamento
+2025-01   84448          8.30          3.36             2.99
+2025-02   74245          9.70          4.15             2.93
+2025-03   77519          6.55          2.74             1.86
+2025-04   76086          7.73          3.07             2.36
+2025-05   78042          6.38          2.59             1.77
+[2] OK (7s, 5 linhas na amostra)
+icao                                   razao_social  etapas pct_atraso_30 pct_cancelamento  razao_obs_esp
+ TAP       TAP - TRANSPORTES AÉREOS PORTUGUESES S/A   10091         19.58             1.40           1.03
+ ARG                      AEROLINEAS ARGENTINAS S/A    8373         13.50             4.36           1.29
+ ACN    AZUL CONECTA LTDA. (EX TWO TAXI AEREO LTDA)   16178         12.09            13.77           1.00
+ AVA AEROVIAS DEL CONTINENTE AMERICANO S.A. AVIANCA    5153         10.89             2.50           0.98
+ SKU                               SKY AIRLINE S.A.    6248         10.08            13.62           1.28
+[3] OK (6s, 5 linhas na amostra)
+icao     municipio uf  chegadas pct_atraso_30
+SBGR     Guarulhos SP    137975         10.01
+SBKP      Campinas SP     56457          9.05
+SBFL Florianópolis SC     17602          8.55
+SBCY        Cuiabá MT      9809          8.45
+SBCF       Confins MG     57389          8.40
+[4] OK (5s, 5 linhas na amostra)
+ hora  etapas pct_atraso_30 pct_cancelamento  mediana_atraso_partida_min  p90_atraso_partida_min
+    0   16775          4.64             1.91                        -5.0                    14.0
+    1   14096          4.38             1.57                        -6.0                     8.0
+    2   27455          3.51             1.59                        -7.0                     4.0
+    3   38759          3.48             1.97                        -6.0                     6.0
+    4   36500          5.39             1.63                        -1.0                    17.0
+[5] OK (2s, 5 linhas na amostra)
+     faixa_distancia  voos  mediana_absorcao_min pct_chegam_no_horario pct_recuperam_algo
+       1. Até 500 km 35536                  -4.0                  17.5               66.3
+   2. 500 a 1.000 km 37656                  -4.0                  20.5               68.3
+ 3. 1.000 a 2.000 km 33850                  -5.0                  25.0               70.6
+ 4. 2.000 a 4.000 km 23272                  -7.0                  30.6               73.4
+5. Acima de 4.000 km 22389                 -13.0                  40.4               73.6
+[6] OK (6s, 2 linhas na amostra)
+                     criterio cobertura_com_10pct_dos_voos
+taxa de atraso no 1º semestre                         16.5
+volume de voos no 1º semestre                          9.1
+[7] OK (12s, 5 linhas na amostra)
+    faixa_distancia    tipo_linha  etapas pct_atraso_30 pct_cancelamento
+      1. Até 500 km Internacional     472         16.90            11.02
+      1. Até 500 km      Nacional  246328          7.88             2.85
+  2. 500 a 1.000 km Internacional    1183          9.94            18.34
+  2. 500 a 1.000 km      Nacional  260192          7.18             1.65
+3. 1.000 a 2.000 km Internacional   40102         11.58             2.37
+[8] OK (0s, 5 linhas na amostra)
+    dimensao                                                                            verificacao  ocorrencias    base     pct                                                                                                                     afeta                                                                                                                        tratamento
+   Unicidade  Etapas repetidas pela chave natural (empresa, voo, rota, horário, tipo) — antes da R8           61 1005807   0.006                                                                                                    Dupla contagem de voos Fica o registro com horário real mais coerente com o previsto (R8). 
+[9] OK (0s, 5 linhas na amostra)
+pergunta                                              indicador                             valor
+      P1 Etapas de passageiros / atraso > 30 min / cancelamento             947.603 / 8,0% / 2,2%
+      P1                             Pior mês (atraso > 30 min)                    2025-12: 15,3%
+      P1                           Melhor mês (atraso > 30 min)                     2025-08: 6,0%
+      P1           3 maiores companhias (participação nos voos)                             85,9%
+      P1             Companhia mais acima do esperado (obs/esp) Aerolineas Argentinas (ARG): 1,29
+[10] OK (1s, 5 linhas na amostra)
+           fonte  arquivos     bytes  registros         coletado_em
+        ANAC VRA        12 142514421    1005807 2026-10-21 12:42:16
+ANAC Percentuais        12   1648742      13635 2026-10-21 12:42:25
+ ANAC Aeródromos         1    102022        496 2026-10-21 12:42:25
+     OurAirports         1  12748669      86258 2026-10-21 12:42:26
+   ANAC Empresas         2    251050        880 2026-10-21 12:42:25
+✔ 10 consultas SQL executadas com sucesso
+
+Pipeline local concluído: 6 notebooks em 691s
+�XITO: o processo com PID 7816 (processo filho de PID 7696) foi finalizado.
+�XITO: o processo com PID 7696 (processo filho de PID 23020) foi finalizado.
+�XITO: o processo com PID 23020 (processo filho de PID 22896) foi finalizado.
+EXIT=0

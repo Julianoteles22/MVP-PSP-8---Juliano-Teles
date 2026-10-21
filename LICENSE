@@ -1,0 +1,56 @@
+MIT License — código deste repositório
+
+Copyright (c) 2026 Juliano Teles Abrahao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+===============================================================================
+REGISTRO DAS LICENÇAS DOS DADOS UTILIZADOS
+===============================================================================
+
+A licença MIT acima cobre apenas o código. Os dados brutos NÃO são versionados
+neste repositório (são baixados por scripts/coleta.py) e permanecem sob as
+condições de suas fontes:
+
+1. ANAC — Agência Nacional de Aviação Civil — Dados abertos
+   Conjuntos utilizados:
+     * Voo Regular Ativo (VRA), 2025
+     * Percentuais de atrasos e cancelamentos (Anexo III), 2025
+     * Lista de aeródromos públicos
+     * Empresas aéreas nacionais e estrangeiras
+   Publicados em https://sistemas.anac.gov.br/dadosabertos/ e catalogados no
+   Portal Brasileiro de Dados Abertos (https://dados.gov.br/).
+   Base legal: Política de Dados Abertos do Poder Executivo Federal (Decreto
+   nº 8.777, de 11 de maio de 2016) e Lei de Acesso à Informação (Lei nº
+   12.527/2011), conforme o Plano de Dados Abertos da ANAC.
+   ATENÇÃO — NÃO CONFIRMADO: o texto da licença específica de cada conjunto não
+   pôde ser consultado de forma automatizada (a ficha do conjunto no
+   dados.gov.br exige JavaScript e a página da ANAC no gov.br é protegida por
+   captcha). Conferir o campo "Licença" na ficha de cada conjunto antes de
+   qualquer redistribuição. Este repositório não redistribui os dados brutos:
+   publica apenas o script de coleta e resultados agregados.
+   Dados pessoais: o cadastro de empresas aéreas traz endereço, CEP, telefone e
+   e-mail das empresas. Esses quatro campos NÃO são carregados em nenhuma tabela
+   do pipeline (LGPD, Lei nº 13.709/2018).
+
+2. OurAirports — aeroportos do mundo (airports.csv)
+   https://ourairports.com/data/ · https://github.com/davidmegginson/ourairports-data
+   Licença: domínio público (os dados são liberados para o domínio público, sem
+   garantia de exatidão; atribuição solicitada, não obrigatória).
+   Os dados são mantidos por voluntários; a cobertura e a exatidão variam.
